@@ -7,6 +7,8 @@ namespace DurableOrchestrationPOC
 {
     public static class FuncDurableChild
     {
+        private const int FunctionTimeOut = 5;
+
         [FunctionName("FuncDurableChild")]
         public static async Task<ChildResponse> RunOrchestrator([OrchestrationTrigger] DurableOrchestrationContext context,
             ILogger log)
@@ -17,7 +19,7 @@ namespace DurableOrchestrationPOC
 
             using (var timeoutCts = new CancellationTokenSource())
             {
-                var dueTime = context.CurrentUtcDateTime.AddMinutes(5);
+                var dueTime = context.CurrentUtcDateTime.AddMinutes(FunctionTimeOut);
                 var durableTimeout = context.CreateTimer(dueTime, timeoutCts.Token);
 
                 var eventName = "ApprovalEvent";

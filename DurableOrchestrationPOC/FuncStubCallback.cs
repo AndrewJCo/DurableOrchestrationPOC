@@ -15,7 +15,7 @@ namespace DurableOrchestrationPOC
         {
             await Task.Delay(startParameters.DelayInMilliSeconds);
 
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation("FuncStubCallback processed a request.");
 
             var request = new HttpRequestMessage
             {

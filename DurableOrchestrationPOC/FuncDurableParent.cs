@@ -34,7 +34,7 @@ namespace DurableOrchestrationPOC
         }
 
 
-        [FunctionName("FuncDurableParent")]
+        [FunctionName("FuncDurableParentBatch")]
         public static async Task<List<string>> FuncDurableParentBatch(
             [OrchestrationTrigger] DurableOrchestrationContext context)
         {
@@ -58,7 +58,6 @@ namespace DurableOrchestrationPOC
                 }
 
                 await Task.WhenAll(tasks);
-
                 foreach (var finishedTask in tasks) outputs.Add(finishedTask.Result.City);
             }
 
@@ -72,7 +71,7 @@ namespace DurableOrchestrationPOC
             [OrchestrationClient] DurableOrchestrationClient starter,
             ILogger log)
         {
-            var instanceId = await starter.StartNewAsync("FuncDurableParent", null);
+            var instanceId = await starter.StartNewAsync("FuncDurableParentBatch", null);
 
             log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
