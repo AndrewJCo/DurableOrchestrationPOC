@@ -20,14 +20,22 @@ namespace DurableOrchestrationPOC
         {
             var outputs = new List<string>();
 
-            var tasks = new List<Task<ChildResponse>>
+
+            var requestsToProcess = new List<ChildRequest>
             {
-                context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Tokyo"}),
-                context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Seattle"}),
-                context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "London"})
+                new ChildRequest {City = "Tokyo"},
+                new ChildRequest {City = "Seattle"},
+                new ChildRequest {City = "London"}
             };
 
-            var sampleTask = new Task<ChildResponse>()
+            //var tasks = new List<Task<ChildResponse>>
+            //{
+            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Tokyo"}),
+            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Seattle"}),
+            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "London"})
+            //};
+
+            //var sampleTask = new Task<ChildResponse>()
 
             //var tasks = new List<Task<ChildResponse>>
             //{
@@ -38,11 +46,18 @@ namespace DurableOrchestrationPOC
 
             //await Task.WhenAll(tasks);
 
-            foreach(var taskBatch in tasks.Batch(BatchLimit))
+            foreach(var requestBatch in requestsToProcess.Batch(BatchLimit))
             {
-                await Task.WhenAll(taskBatch);
+                var tasks = new List<Task<ChildResponse>>();
 
-                foreach (var finishedTask in taskBatch) outputs.Add(finishedTask.Result.City);
+                foreach (var request in requestBatch)
+                {
+                    tasks.Add(context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", request));
+                }
+
+                await Task.WhenAll(tasks);
+
+                foreach (var finishedTask in tasks) outputs.Add(finishedTask.Result.City);
             }
 
             return outputs;
