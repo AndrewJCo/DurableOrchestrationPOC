@@ -20,9 +20,8 @@ namespace DurableOrchestrationPOC
                 var dueTime = ctx.CurrentUtcDateTime.AddMinutes(5);
                 var durableTimeout = ctx.CreateTimer(dueTime, timeoutCts.Token);
 
-                var eventName = "ApprovalEvent" + request.City;
+                var eventName = "ApprovalEvent";
                 log.LogInformation($"Waiting for {ctx.InstanceId} {eventName}");
-
 
                 var approvalEvent = ctx.WaitForExternalEvent<bool>(eventName);
                 if (approvalEvent == await Task.WhenAny(approvalEvent, durableTimeout))

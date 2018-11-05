@@ -15,7 +15,27 @@ namespace DurableOrchestrationPOC
         // https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sub-orchestrations
 
         [FunctionName("FuncDurableParent")]
-        public static async Task<List<string>> RunOrchestrator(
+        public static async Task<List<string>> Run(
+            [OrchestrationTrigger] DurableOrchestrationContext context)
+        {
+            var outputs = new List<string>();
+
+            var tasks = new List<Task<ChildResponse>>
+            {
+                context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Tokyo"}),
+                context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Seattle"}),
+                context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "London"})
+            };
+
+            await Task.WhenAll(tasks);
+            foreach (var finishedTask in tasks) outputs.Add(finishedTask.Result.City);
+
+            return outputs;
+        }
+
+
+        [FunctionName("FuncDurableParentBatch")]
+        public static async Task<List<string>> FuncDurableParentBatch(
             [OrchestrationTrigger] DurableOrchestrationContext context)
         {
             var outputs = new List<string>();
@@ -28,25 +48,7 @@ namespace DurableOrchestrationPOC
                 new ChildRequest {City = "London"}
             };
 
-            //var tasks = new List<Task<ChildResponse>>
-            //{
-            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Tokyo"}),
-            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Seattle"}),
-            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "London"})
-            //};
-
-            //var sampleTask = new Task<ChildResponse>()
-
-            //var tasks = new List<Task<ChildResponse>>
-            //{
-            //    context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Tokyo"})
-            //    //context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "Seattle"}),
-            //    //context.CallSubOrchestratorAsync<ChildResponse>("FuncDurableChild", new ChildRequest {City = "London"})
-            //};
-
-            //await Task.WhenAll(tasks);
-
-            foreach(var requestBatch in requestsToProcess.Batch(BatchLimit))
+            foreach (var requestBatch in requestsToProcess.Batch(BatchLimit))
             {
                 var tasks = new List<Task<ChildResponse>>();
 
@@ -62,8 +64,6 @@ namespace DurableOrchestrationPOC
 
             return outputs;
         }
-
-        
 
         [FunctionName("FuncDurableParent_HttpStart")]
         public static async Task<HttpResponseMessage> HttpStart(
