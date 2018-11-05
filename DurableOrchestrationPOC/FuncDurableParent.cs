@@ -14,7 +14,7 @@ namespace DurableOrchestrationPOC
 
         // https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sub-orchestrations
 
-        [FunctionName("FuncDurableParent")]
+        [FunctionName("FuncDurableParentSingle")]
         public static async Task<List<string>> Run(
             [OrchestrationTrigger] DurableOrchestrationContext context)
         {
@@ -34,7 +34,7 @@ namespace DurableOrchestrationPOC
         }
 
 
-        [FunctionName("FuncDurableParentBatch")]
+        [FunctionName("FuncDurableParent")]
         public static async Task<List<string>> FuncDurableParentBatch(
             [OrchestrationTrigger] DurableOrchestrationContext context)
         {

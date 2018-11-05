@@ -8,22 +8,35 @@ namespace DurableOrchestrationPOC
     public static class FuncDurableChild
     {
         [FunctionName("FuncDurableChild")]
-        public static async Task<ChildResponse> RunOrchestrator([OrchestrationTrigger] DurableOrchestrationContext ctx,
+        public static async Task<ChildResponse> RunOrchestrator([OrchestrationTrigger] DurableOrchestrationContext context,
             ILogger log)
         {
             var response = new ChildResponse();
-
-            var request = ctx.GetInput<ChildRequest>();
+            
+            var request = context.GetInput<ChildRequest>();
 
             using (var timeoutCts = new CancellationTokenSource())
             {
-                var dueTime = ctx.CurrentUtcDateTime.AddMinutes(5);
-                var durableTimeout = ctx.CreateTimer(dueTime, timeoutCts.Token);
+                var dueTime = context.CurrentUtcDateTime.AddMinutes(5);
+                var durableTimeout = context.CreateTimer(dueTime, timeoutCts.Token);
 
                 var eventName = "ApprovalEvent";
-                log.LogInformation($"Waiting for {ctx.InstanceId} {eventName}");
+                if (!context.IsReplaying) log.LogInformation($"Waiting for {context.InstanceId} {eventName}");
 
-                var approvalEvent = ctx.WaitForExternalEvent<bool>(eventName);
+                // Simulate an external event by kicking off a callback which will pause then trigger the event below
+                string instanceId = context.InstanceId;
+                var callbackRequest = new CallbackRequest
+                {
+                    DelayInMilliSeconds = 10000,
+                    Url = "http://localhost:7071/api/FuncOrchestrationEvent?instanceid=" + instanceId + "&operationid=ApprovalEvent"
+                };
+
+#pragma warning disable 4014
+                context.CallActivityAsync<CallbackRequest>("FuncStubCallback", callbackRequest);
+#pragma warning restore 4014
+
+                // Wait for the event
+                var approvalEvent = context.WaitForExternalEvent<bool>(eventName);
                 if (approvalEvent == await Task.WhenAny(approvalEvent, durableTimeout))
                 {
                     timeoutCts.Cancel();
